@@ -1,0 +1,377 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>毕业生租房</title>
+    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/main1119.css" />
+    <link rel="stylesheet" href="http://cache.amap.com/lbs/static/jquery.range.css" />
+    <script src="http://cache.amap.com/lbs/static/jquery-1.9.1.js"></script>
+    <script src="http://cache.amap.com/lbs/static/es5.min.js"></script>
+    <script src="http://webapi.amap.com/maps?v=1.3&key=22d3816e107f199992666d6412fa0691&plugin=AMap.ArrivalRange,AMap.Scale,AMap.Geocoder,AMap.Transfer,AMap.Autocomplete"></script>
+    <script src="http://cache.amap.com/lbs/static/jquery.range.js"></script>
+
+    <!-- 导入jqery  -->
+    <script src="/static/js/jquery.min.js" type="text/javascript"></script>
+
+    <style>
+        .control-panel {
+            position: absolute;
+            top: 30px;
+            right: 20px;
+        }
+        .control-entry {
+            width: 302px;
+            background-color: rgba(119, 136, 153, 0.8);
+            font-family: fantasy, sans-serif;
+            text-align: left;
+            color: white;
+            overflow: auto;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .control-input {
+            margin-left: 120px;
+        }
+        
+        .control-input input[type="text"] {
+            width: 500px;
+        }
+        
+        /* .control-panel label {
+            float: left;
+            width: 80px;
+        } */
+        /* 所有的输入框和下拉列表框 */
+        .from1 input,select{
+            margin-left:10px 
+        } 
+        .from1 div{
+            margin: 5px 0;
+        }
+        .control-entry>.from1>.price input[type="text"]{
+            width: 70px;
+        }
+
+        #transfer-panel {
+            position: absolute;
+            background-color: white;
+            max-height: 80%;
+            overflow-y: auto;
+            top: 30px;
+            left: 20px;
+            width: 250px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+    <div class="control-panel">
+        <div class="control-entry">
+            <div>
+                <label for="work-location">工作地点:</label>
+                <input type="text" name="work-location" id="work-location">
+            </div> 
+            <!-- 价格区间 select ID:price-->
+            <div class="price">
+                <label>价格区间:</label>
+                <select name="price" id="price">
+                    <option value="1000">0-1000元</option>
+                    <option value="2000" >1000-2000元</option>
+                    <option value="3000">2000-3000元</option>
+                    <option value="4000">3000-4000元</option>
+                    <option value="5000">4000-5000元</option>
+                    <option value="10000">5000元以上</option>
+                </select>
+            </div>
+            <!-- 出行方式 -->
+            <div class='trip-mode'> 
+                <label>选择通勤方式：</label>
+                <div class="control-input">
+                    <input type="radio" name="vehicle" value="SUBWAY,BUS" onClick="takeBus(this)" checked/> 公交+地铁
+                    <input type="radio" name="vehicle" value="SUBWAY" onClick="takeSubway(this)" /> 地铁
+                </div>
+            </div>
+            <!-- 路程时间　我们通过路程事件推算距离 -->
+            <div class="dis-time">
+                <label for="dis">路程时间:</label>
+                <div >
+                    <input type="radio" name="dis-time" value=20 onClick="dis_time(this)" checked/> 20分钟
+                    <input type="radio" name="dis-time" value=40 onClick="dis_time(this)" />40分钟
+                    <input type="radio" name="dis-time" value=60 onClick="dis_time(this)" />60分钟
+                </div>
+            </div>
+            <div>
+                <input id='btn' type="button" value="确定">
+            </div>
+        </div>
+        <!-- <div class="control-entry">
+            <label>选择通勤方式：</label>
+            <div class="control-input">
+                <input type="radio" name="vehicle" value="SUBWAY,BUS" onClick="takeBus(this)" checked/> 公交+地铁
+                <input type="radio" name="vehicle" value="SUBWAY" onClick="takeSubway(this)" /> 地铁
+            </div>
+        </div> -->
+        <!-- <div class="control-entry">
+            <label>导入房源文件：</label>
+            <div class="control-input">
+                <input type="file" name="file" onChange="importRentInfo(this)" />
+            </div>
+        </div> -->
+    </div>
+    <div id="transfer-panel"></div>
+    <script>
+    var map = new AMap.Map("container", {
+        resizeEnable: true,             //页面可调整大小        
+        zoomEnable: true,               //可缩放
+        center: [116.397428, 39.90923], //地图中心，这里使用的是北京的经纬度
+        zoom: 11                        //缩放等级，数字越大离地球越近
+    });
+
+    var scale = new AMap.Scale();
+    map.addControl(scale);
+    //公交到达圈对象
+    var arrivalRange = new AMap.ArrivalRange();
+    //经度，纬度，时间（用不到），通勤方式（默认是地铁＋公交）
+    var x, y, t, vehicle = "SUBWAY,BUS";
+    //工作地点，工作标记
+    var workAddress, workMarker;
+    //房源标记队列
+    var rentMarkerArray = [];
+    //多边形队列，存储公交到达的计算结果
+    var polygonArray = [];
+    //路径规划
+    var amapTransfer;
+    //路程时间
+    var distance_time = 20;
+    // 出行方式速度
+    var speed = 25  //km/h
+
+    //信息窗体对象  信息窗体的使用，在房源标记被点击时弹出
+    var infoWindow = new AMap.InfoWindow({
+        offset: new AMap.Pixel(0, -30)
+    });
+    // //在房源标记被点击时打开
+    // rentMarker.on('click', function(e) {
+    //     //鼠标移到标记上会显示标记content属性的内容
+    //     infoWindow.setContent(e.target.content);
+    //     //在标记的位置打开窗体
+    //     infoWindow.open(map, e.target.getPosition());
+    // });
+    var auto = new AMap.Autocomplete({
+        //通过id指定输入元素
+         input: "work-location"
+    });
+
+    //添加事件监听，在选择补完的地址后调用workLocationSelected
+    AMap.event.addListener(auto, "select", workLocationSelected);
+    //路程时间
+    function　dis_time(radio_dis_time){
+        distance_time = radio_dis_time.value
+        loadWorkLocation()
+    }
+
+    function takeBus(radio) {
+        vehicle = radio.value;
+        speed = 25
+        loadWorkLocation()
+    }
+
+    function takeSubway(radio) {
+        vehicle = radio.value;
+        speed = 36
+        loadWorkLocation()
+    }
+    //其他出行方式可扩展 --【】
+    function importRentInfo(fileInfo) {
+        var file = fileInfo.files[0].name;
+        loadRentLocationByFile(file);
+    }
+
+    function workLocationSelected(e) {
+        //更新工作地点，加载公交到达圈
+        workAddress = e.poi.name;
+        loadWorkLocation();
+    }
+    
+    function loadWorkMarker(x, y, locationName) {
+        workMarker = new AMap.Marker({
+            map: map,
+            title: locationName,
+            icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
+            position: [x, y]
+        });
+    }
+    // loadWorkRange 的实现，在地图上绘制到达圈
+    function loadWorkRange(x, y, t, color, v) {
+        arrivalRange.search([x, y], t, function(status, result) {
+            if (result.bounds) {
+                for (var i = 0; i < result.bounds.length; i++) {
+                    //新建多边形对象
+                    var polygon = new AMap.Polygon({
+                        map: map,
+                        fillColor: color,
+                        fillOpacity: "0.4",
+                        strokeColor: color,
+                        strokeOpacity: "0.8",
+                        strokeWeight: 1
+                    });
+                    //得到到达圈的多边形路径
+                    polygon.setPath(result.bounds[i]);
+                    polygonArray.push(polygon);
+                }
+            }
+        }, {
+            policy: v
+        });
+    }
+    function addMarkerByAddress(address) {
+        var geocoder = new AMap.Geocoder({
+            city: "北京",
+            radius: 1000
+        });
+        geocoder.getLocation(address, function(status, result) {
+            if (status === "complete" && result.info === 'OK') {
+                var geocode = result.geocodes[0];
+                rentMarker = new AMap.Marker({
+                    map: map,
+                    title: address,
+                    icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+                    position: [geocode.location.getLng(),geocode.location.getLat()]
+                });
+                rentMarkerArray.push(rentMarker);
+
+                rentMarker.content = "<div>房源：<a target = '_blank' href='https://bj.58.com/pinpaigongyu/?key=" + address + "'>" + address + "</a><div>"
+                rentMarker.on('click', function(e) {
+                    infoWindow.setContent(e.target.content);
+                    infoWindow.open(map, e.target.getPosition());
+                    if (amapTransfer) amapTransfer.clear();
+                    amapTransfer = new AMap.Transfer({
+                        map: map,
+                        policy: AMap.TransferPolicy.LEAST_TIME,
+                        city: "北京市",
+                        panel: 'transfer-panel'
+                    });
+                    amapTransfer.search([{
+                        keyword: workAddress
+                    }, {
+                        keyword: address
+                    }], function(status, result) {})
+                });
+            }
+        })
+    }
+
+    function delWorkLocation() {
+        if (polygonArray) map.remove(polygonArray);
+        if (workMarker) map.remove(workMarker);
+        polygonArray = [];
+    }
+
+    function delRentLocation() {
+        if (rentMarkerArray) map.remove(rentMarkerArray);
+        rentMarkerArray = [];
+    }
+    function loadWorkLocation() {
+        //首先清空地图上已有的到达圈
+        delWorkLocation();
+        var geocoder = new AMap.Geocoder({
+            city: "北京",
+            radius: 1000
+        });
+
+        geocoder.getLocation(workAddress, function(status, result) {
+            if (status === "complete" && result.info === 'OK') {
+                var geocode = result.geocodes[0];
+                x = geocode.location.getLng(); //工作地点lng 经度位置
+                y = geocode.location.getLat(); //工作地点lat 维度位置
+                //加载工作地点标记
+                loadWorkMarker(x, y);
+                //加载指定分钟内工作地点到达圈
+                console.log(distance_time)
+                loadWorkRange(x, y, distance_time, "#3f67a5", vehicle);
+                //地图移动到工作地点的位置
+                map.setZoomAndCenter(12, [x, y]);
+            }
+        })
+    }
+
+    function loadRentLocationByFile(fileName) {
+        delRentLocation();
+        var rent_locations = new Set();
+        $.get(fileName, function(data) {
+            data = data.split("\n");
+            data.forEach(function(item, index) {
+                rent_locations.add(item.split(",")[1]);
+            });
+            rent_locations.forEach(function(element, index) {
+                addMarkerByAddress(element);
+            });
+        });
+    }
+    // 点击按钮绑定
+    $('#btn').on('click', function(){
+
+    
+        // 接受范围 计算 通过出行方式 速度*路程时间  得出查找范围
+        var distance = speed*(distance_time/60)
+        // 接受的范围价格
+        a_price = $('select#price').val()
+        // 组织json 数据
+        var post_data = {
+            'W_L':[x,y], //工作地点经纬度
+            'DS':distance,
+            'price':a_price
+        }
+
+        // $.ajax({
+        //     // 请求方式
+        //     type:"post",
+        //     // contentType 
+        //     contentType:"application/json",
+        //     // dataType
+        //     dataType:"json",
+        //     // url
+        //     url:"http://127.0.0.1:8000/v1/houses",
+        //     // 把JS的对象或数组序列化一个json 字符串
+        //     data:JSON.stringify(post_data),
+        //     // result 为请求的返回结果对象
+        //     beforeSend: function(request) {
+        //         console.log('发出数据')
+        //     },
+        //     success:function (result) {
+        //         if (200 == result.code){
+        //             alert("发布成功")
+        //         }else{
+        //             alert(result.error)
+        //         }
+        //     }
+        // })
+        $.ajax({
+        // 请求方式
+        type:"post",
+        // contentType 
+        contentType:"application/json",
+        // dataType
+        dataType:"json",
+        // url
+        url:"http://127.0.0.1:8000/v1/houses",
+        // 把JS的对象或数组序列化一个json 字符串
+        data:JSON.stringify(post_data),
+        // result 为请求的返回结果对象
+        success:function (result) {
+            if (200 == result.code){
+                alert('登陆成功')
+            }else{
+                alert(result.error)
+            }
+        }  
+    })
+    })
+    </script>
+</body>
+
+</html>
