@@ -326,30 +326,6 @@
             'DS':distance,
             'price':a_price
         }
-
-        // $.ajax({
-        //     // 请求方式
-        //     type:"post",
-        //     // contentType 
-        //     contentType:"application/json",
-        //     // dataType
-        //     dataType:"json",
-        //     // url
-        //     url:"http://127.0.0.1:8000/v1/houses",
-        //     // 把JS的对象或数组序列化一个json 字符串
-        //     data:JSON.stringify(post_data),
-        //     // result 为请求的返回结果对象
-        //     beforeSend: function(request) {
-        //         console.log('发出数据')
-        //     },
-        //     success:function (result) {
-        //         if (200 == result.code){
-        //             alert("发布成功")
-        //         }else{
-        //             alert(result.error)
-        //         }
-        //     }
-        // })
         $.ajax({
         // 请求方式
         type:"post",
@@ -364,8 +340,10 @@
         // result 为请求的返回结果对象
         success:function (result) {
             if (200 == result.code){
-                alert('登陆成功')
-            }else{
+                //根据返回信息 在地图创建标记点
+                alert(result.data)
+            }
+            else{
                 alert(result.error)
             }
         }  
