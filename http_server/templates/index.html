@@ -21,6 +21,16 @@
             top: 30px;
             right: 20px;
         }
+        .login{
+            padding: 10px;
+            display: inline-block;
+            position:absolute;
+            left: 45%;
+            top: 40%;
+            background-color: rgba(119, 136, 154, 0.5);
+            border-radius: 15px;
+            display: none
+        }
         .control-entry {
             width: 302px;
             background-color: rgba(119, 136, 153, 0.8);
@@ -65,6 +75,7 @@
             width: 250px;
         }
     </style>
+    
 </head>
 
 <body>
@@ -108,21 +119,10 @@
                 <input id='btn' type="button" value="确定">
             </div>
         </div>
-        <!-- <div class="control-entry">
-            <label>选择通勤方式：</label>
-            <div class="control-input">
-                <input type="radio" name="vehicle" value="SUBWAY,BUS" onClick="takeBus(this)" checked/> 公交+地铁
-                <input type="radio" name="vehicle" value="SUBWAY" onClick="takeSubway(this)" /> 地铁
-            </div>
-        </div> -->
-        <!-- <div class="control-entry">
-            <label>导入房源文件：</label>
-            <div class="control-input">
-                <input type="file" name="file" onChange="importRentInfo(this)" />
-            </div>
-        </div> -->
     </div>
-    <div id="transfer-panel"></div>
+    <div class="login">
+        <h4>获取房源信息中，请稍后...</h4>
+    </div>
     <script>
     var map = new AMap.Map("container", {
         resizeEnable: true,             //页面可调整大小        
@@ -150,17 +150,6 @@
     // 出行方式速度
     var speed = 25  //km/h
 
-    //信息窗体对象  信息窗体的使用，在房源标记被点击时弹出
-    var infoWindow = new AMap.InfoWindow({
-        offset: new AMap.Pixel(0, -30)
-    });
-    // //在房源标记被点击时打开
-    // rentMarker.on('click', function(e) {
-    //     //鼠标移到标记上会显示标记content属性的内容
-    //     infoWindow.setContent(e.target.content);
-    //     //在标记的位置打开窗体
-    //     infoWindow.open(map, e.target.getPosition());
-    // });
     var auto = new AMap.Autocomplete({
         //通过id指定输入元素
          input: "work-location"
@@ -228,6 +217,31 @@
             policy: v
         });
     }
+    //添加标记点传入返回的js数据
+    function addMarkerByPostion(data){
+        var lnglats = [
+        [116.368904, 39.923423],
+        [116.382122, 39.921176],
+        [116.387271, 39.922501],
+        [116.398258, 39.914600]
+        ];
+        //信息窗体对象  信息窗体的使用，在房源标记被点击时弹出
+        var infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)});
+        for (var i = 0, marker; i < lnglats.length; i++) {
+            var marker = new AMap.Marker({
+                position: lnglats[i],
+                map: map
+            });
+            marker.content = '我是第' + (i + 1) + '个Marker';
+            marker.on('click', markerClick);
+            marker.emit('click', {target: marker});
+        }
+        function markerClick(e) {
+            infoWindow.setContent(e.target.content);
+            infoWindow.open(map, e.target.getPosition());
+        }
+    }
+
     function addMarkerByAddress(address) {
         var geocoder = new AMap.Geocoder({
             city: "北京",
@@ -243,8 +257,15 @@
                     position: [geocode.location.getLng(),geocode.location.getLat()]
                 });
                 rentMarkerArray.push(rentMarker);
-
+                //当标记点点开时显示的窗体
                 rentMarker.content = "<div>房源：<a target = '_blank' href='https://bj.58.com/pinpaigongyu/?key=" + address + "'>" + address + "</a><div>"
+                //在房源标记被点击时打开
+                rentMarker.on('click', function(e) {
+                    //鼠标移到标记上会显示标记content属性的内容
+                    infoWindow.setContent(e.target.content);
+                    //在标记的位置打开窗体
+                    infoWindow.open(map, e.target.getPosition());
+                });
                 rentMarker.on('click', function(e) {
                     infoWindow.setContent(e.target.content);
                     infoWindow.open(map, e.target.getPosition());
@@ -312,10 +333,9 @@
             });
         });
     }
+
     // 点击按钮绑定
     $('#btn').on('click', function(){
-
-    
         // 接受范围 计算 通过出行方式 速度*路程时间  得出查找范围
         var distance = speed*(distance_time/60)
         // 接受的范围价格
@@ -337,11 +357,20 @@
         url:"http://127.0.0.1:8000/v1/houses",
         // 把JS的对象或数组序列化一个json 字符串
         data:JSON.stringify(post_data),
+        beforeSend:function(){
+            $('div.login').css({
+            display: "block",
+            })
+        },
         // result 为请求的返回结果对象
         success:function (result) {
+            $('div.login').css({
+            display: 'none'
+            })
             if (200 == result.code){
                 //根据返回信息 在地图创建标记点
                 alert(result.data)
+                console.log(result.data)
             }
             else{
                 alert(result.error)

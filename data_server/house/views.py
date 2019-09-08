@@ -1,5 +1,6 @@
 from django.http import HttpResponse,JsonResponse
 import json
+import time
 # Create your views here.
 def house_views(request):
     """
@@ -19,7 +20,23 @@ def house_views(request):
              'house_name':'月季园',
              'url':'www.baidu.com',
              'message':'啥啥啥',
-            }
+            },
+            {'locat':[116.368904, 39.923423],
+             'house_name':'房子1',
+             'url':'baidu.com',
+             'message':'我们打的费'},
+            {'locat':[116.382122, 39.921176],
+             'house_name':'房子2',
+             'url':'baidu.com',
+             'message':'我们打的费'},
+            {'locat':[116.387271, 39.922501],
+             'house_name':'房子3',
+             'url':'baidu.com',
+             'message':'我们打的费'},
+            {'locat':[116.398258, 39.914600],
+             'house_name':'房子4',
+             'url':'baidu.com',
+             'message':'我们打的费'},
         ]
-
+    time.sleep(1)
     return JsonResponse({'code':200,'data':toget_array})
