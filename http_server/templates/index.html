@@ -221,24 +221,25 @@
     function addMarkerByPostion(marker_array){
         //信息窗体对象  信息窗体的使用，在房源标记被点击时弹出
         var infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)});
-        for (var i = 0;i < marker_array.length; i++) {
+        $.each(marker_array,function(i,n){
+            console.log(n.house_name,n.message,n.url,n.address)
             var marker = new AMap.Marker({
-                position: i.locat,//[123456,154432]位置
+                position: n.locat,//[123456,154432]位置
                 map: map
             });
-            mar_content += "<div>"
-            mar_content += "房源:"+i.house_name
-            mar_content += "房源来源："+i.message
-            mar_content += "房源链接：<a target = '_blank' href='"+i.url+"'>页面详情</a><div>";
+            var mar_content = "<div>"
+            mar_content += "房源:"+n.house_name
+            mar_content += "房源来源："+n.message
+            mar_content += "房源链接：<a target = '_blank' href='"+n.url+"'>页面详情</a><div>";
             marker.content = mar_content
-            //在房源标记被点击时打开
+            //在房源标记被点击时打
             marker.on('click', markerClick);
-            // marker.emit('click', {target: marker});
-            //规划路线
+            marker.emit('click', {target: marker});
+            // 规划路线
             marker.on('click', function(e){
                 infoWindow.setContent(e.target.content);
                 infoWindow.open(map, e.target.getPosition());
-                if (amapTransfer) amapTransfer.clear();
+                // if (amapTransfer) amapTransfer.clear();
                 amapTransfer = new AMap.Transfer({
                     map: map,
                     policy: AMap.TransferPolicy.LEAST_TIME,
@@ -249,10 +250,10 @@
                 amapTransfer.search([{
                     keyword: workAddress
                 }, {
-                    keyword: i.adderss
+                    keyword: n.address
                 }], function(status, result) {})
             });
-        }
+        })
         function markerClick(e) {
             //鼠标移到标记上会显示标记content属性的内容
             infoWindow.setContent(e.target.content);
@@ -261,49 +262,49 @@
         }
     }
 
-    function addMarkerByAddress(address) {
-        var geocoder = new AMap.Geocoder({
-            city: "北京",
-            radius: 1000
-        });
-        geocoder.getLocation(address, function(status, result) {
-            if (status === "complete" && result.info === 'OK') {
-                var geocode = result.geocodes[0];
-                rentMarker = new AMap.Marker({
-                    map: map,
-                    title: address,
-                    icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
-                    position: [geocode.location.getLng(),geocode.location.getLat()]
-                });
-                rentMarkerArray.push(rentMarker);
-                //当标记点点开时显示的窗体
-                rentMarker.content = "<div>房源：<a target = '_blank' href='https://bj.58.com/pinpaigongyu/?key=" + address + "'>" + address + "</a><div>"
-                //在房源标记被点击时打开
-                rentMarker.on('click', function(e) {
+    // function addMarkerByAddress(address) {
+    //     var geocoder = new AMap.Geocoder({
+    //         city: "北京",
+    //         radius: 1000
+    //     });
+    //     geocoder.getLocation(address, function(status, result) {
+    //         if (status === "complete" && result.info === 'OK') {
+    //             var geocode = result.geocodes[0];
+    //             rentMarker = new AMap.Marker({
+    //                 map: map,
+    //                 title: address,
+    //                 icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+    //                 position: [geocode.location.getLng(),geocode.location.getLat()]
+    //             });
+    //             rentMarkerArray.push(rentMarker);
+    //             //当标记点点开时显示的窗体
+    //             rentMarker.content = "<div>房源：<a target = '_blank' href='https://bj.58.com/pinpaigongyu/?key=" + address + "'>" + address + "</a><div>"
+    //             //在房源标记被点击时打开
+    //             rentMarker.on('click', function(e) {
                     
-                    infoWindow.setContent(e.target.content);
-                    //在标记的位置打开窗体
-                    infoWindow.open(map, e.target.getPosition());
-                });
-                rentMarker.on('click', function(e) {
-                    infoWindow.setContent(e.target.content);
-                    infoWindow.open(map, e.target.getPosition());
-                    if (amapTransfer) amapTransfer.clear();
-                    amapTransfer = new AMap.Transfer({
-                        map: map,
-                        policy: AMap.TransferPolicy.LEAST_TIME,
-                        city: "北京市",
-                        panel: 'transfer-panel'
-                    });
-                    amapTransfer.search([{
-                        keyword: workAddress
-                    }, {
-                        keyword: address
-                    }], function(status, result) {})
-                });
-            }
-        })
-    }
+    //                 infoWindow.setContent(e.target.content);
+    //                 //在标记的位置打开窗体
+    //                 infoWindow.open(map, e.target.getPosition());
+    //             });
+    //             rentMarker.on('click', function(e) {
+    //                 infoWindow.setContent(e.target.content);
+    //                 infoWindow.open(map, e.target.getPosition());
+    //                 if (amapTransfer) amapTransfer.clear();
+    //                 amapTransfer = new AMap.Transfer({
+    //                     map: map,
+    //                     policy: AMap.TransferPolicy.LEAST_TIME,
+    //                     city: "北京市",
+    //                     panel: 'transfer-panel'
+    //                 });
+    //                 amapTransfer.search([{
+    //                     keyword: workAddress
+    //                 }, {
+    //                     keyword: address
+    //                 }], function(status, result) {})
+    //             });
+    //         }
+    //     })
+    // }
 
     function delWorkLocation() {
         if (polygonArray) map.remove(polygonArray);
@@ -388,8 +389,7 @@
             })
             if (200 == result.code){
                 //根据返回信息 在地图创建标记点
-                alert(result.data)
-                console.log(result.data)
+                addMarkerByPostion(result.data)
             }
             else{
                 alert(result.error)
