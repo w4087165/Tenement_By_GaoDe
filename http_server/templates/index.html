@@ -217,27 +217,46 @@
             policy: v
         });
     }
-    //添加标记点传入返回的js数据
-    function addMarkerByPostion(data){
-        var lnglats = [
-        [116.368904, 39.923423],
-        [116.382122, 39.921176],
-        [116.387271, 39.922501],
-        [116.398258, 39.914600]
-        ];
+    //添加标记点传入返回的js数据 数据格式【{object}，{object},{object}】
+    function addMarkerByPostion(marker_array){
         //信息窗体对象  信息窗体的使用，在房源标记被点击时弹出
         var infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)});
-        for (var i = 0, marker; i < lnglats.length; i++) {
+        for (var i = 0;i < marker_array.length; i++) {
             var marker = new AMap.Marker({
-                position: lnglats[i],
+                position: i.locat,//[123456,154432]位置
                 map: map
             });
-            marker.content = '我是第' + (i + 1) + '个Marker';
+            mar_content += "<div>"
+            mar_content += "房源:"+i.house_name
+            mar_content += "房源来源："+i.message
+            mar_content += "房源链接：<a target = '_blank' href='"+i.url+"'>页面详情</a><div>";
+            marker.content = mar_content
+            //在房源标记被点击时打开
             marker.on('click', markerClick);
-            marker.emit('click', {target: marker});
+            // marker.emit('click', {target: marker});
+            //规划路线
+            marker.on('click', function(e){
+                infoWindow.setContent(e.target.content);
+                infoWindow.open(map, e.target.getPosition());
+                if (amapTransfer) amapTransfer.clear();
+                amapTransfer = new AMap.Transfer({
+                    map: map,
+                    policy: AMap.TransferPolicy.LEAST_TIME,
+                    city: "北京市",
+                    panel: 'transfer-panel'
+                });
+                //根据起、终点名称查询公交换乘路线
+                amapTransfer.search([{
+                    keyword: workAddress
+                }, {
+                    keyword: i.adderss
+                }], function(status, result) {})
+            });
         }
         function markerClick(e) {
+            //鼠标移到标记上会显示标记content属性的内容
             infoWindow.setContent(e.target.content);
+            //在标记的位置打开窗体
             infoWindow.open(map, e.target.getPosition());
         }
     }
@@ -261,7 +280,7 @@
                 rentMarker.content = "<div>房源：<a target = '_blank' href='https://bj.58.com/pinpaigongyu/?key=" + address + "'>" + address + "</a><div>"
                 //在房源标记被点击时打开
                 rentMarker.on('click', function(e) {
-                    //鼠标移到标记上会显示标记content属性的内容
+                    
                     infoWindow.setContent(e.target.content);
                     //在标记的位置打开窗体
                     infoWindow.open(map, e.target.getPosition());
