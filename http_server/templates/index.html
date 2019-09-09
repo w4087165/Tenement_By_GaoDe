@@ -164,14 +164,11 @@
     //路线规划
     var transfer;
     //多边形队列，存储公交到达的计算结果
-    var polygonArray = [];
-    //路径规划
-    var amapTransfer;
+    var polygonArray = [];;
     //路程时间
     var distance_time = 20;
     // 出行方式速度
     var speed = 25  //km/h
-
     var auto = new AMap.Autocomplete({
         //通过id指定输入元素
          input: "work-location"
@@ -273,9 +270,12 @@
                 //cityd:'乌鲁木齐',
                 policy: AMap.TransferPolicy.LEAST_TIME
             };
+            if (transfer){
+                //如果绘制了上次路径 清除上次路径
+                transfer.clear()
+            }
             //构造公交换乘类
             transfer = new AMap.Transfer(transOptions);
-            transfer.
             //根据起、终点坐标查询公交换乘路线
             transfer.search(new AMap.LngLat(x,y), new AMap.LngLat(n.locat[0],n.locat[1]), function(status, result) {
                 // result即是对应的公交路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_TransferResult
