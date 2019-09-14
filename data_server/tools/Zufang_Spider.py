@@ -5,12 +5,13 @@ from lxml import etree
 import random
 import time
 import re
-
+import pymysql
 
 class LianjiaSpider(object):
     def __init__(self):
         self.url = "https://bj.lianjia.com/"
-
+        self.db = pymysql.connect('localhost', 'root', '123456', 'House_db', charset='utf8')
+        self.cursor = self.db.cursor()
     def get_headers(self):
         headers = {'User-Agent': random.choice(USERAGENT_LIST)}
         return headers
@@ -53,21 +54,28 @@ class LianjiaSpider(object):
             re_dbs1 = './a/@href'
             href = li.xpath(re_dbs1)
             second_url = self.url + href[0]
-            item['url:'] = second_url
+            item['url'] = second_url
             # 2,房源信息
             re_dbs2 = './/p[@class="content__list--item--title twoline"]/a/text()'
             message = li.xpath(re_dbs2)
-            item['message:'] = message[0].strip()
+            item['message'] = message[0].strip()
             # 3,价钱
             re_dbs3 = './/span/em/text()'
             price = li.xpath(re_dbs3)
-            item['price'] = price[0].strip()
+            item['price'] = float(price[0].strip())
             # 4,房源经纬度---返回值:{'lon:': '116.192696', 'lat:': '39.921511'}
             locat = self.get_locat(second_url)
             item['locat'] = locat
 
-            print(item)
-
+            # 插入数据库数据
+            value = [item['message'],'链家网',item['message'],item['price'],item['locat'][0],item['locat'][1],item['url']]
+            print(value)
+            try:
+                ins = 'insert into LianJia_table(house_name,platform,house_message,price,lon,lat,url) values(%s,%s,%s,%s,%s,%s,%s)'
+                self.cursor.execute(ins,value)
+                self.db.commit()
+            except Exception as e:
+                print(e)
     # 获取经纬度
     def get_locat(self, second_url):
         locat = {}
@@ -77,7 +85,6 @@ class LianjiaSpider(object):
         # locat['lon:'] = a_list[0][0].strip()
         # locat['lat:'] = a_list[0][1].strip()
         a_list = [float(i) for i in a_list[0]]
-        print(a_list)
         return a_list
 
     def run(self):

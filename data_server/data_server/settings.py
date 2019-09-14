@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'house',
     'corsheaders',
 ]
 
@@ -78,7 +79,7 @@ WSGI_APPLICATION = 'data_server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mysite4',  # 数据库名称,需要自己定义
+        'NAME': 'House_db',  # 数据库名称,需要自己定义
         'USER': 'root',
         'PASSWORD': '123456',  # 管理员密码
         'HOST': '127.0.0.1',
