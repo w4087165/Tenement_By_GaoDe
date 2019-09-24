@@ -7,6 +7,8 @@ import time
 import re
 import pymysql
 
+
+
 class LianjiaSpider(object):
     def __init__(self):
         self.url = "https://bj.lianjia.com/"

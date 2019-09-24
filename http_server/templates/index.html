@@ -98,6 +98,7 @@
 </head>
 
 <body>
+    
     <div id="container"></div>
     <div id="panel"></div>
     <div class="control-panel">
@@ -245,7 +246,9 @@
             position: n.locat,//[123456,154432]位置
             map: map
         });
+    
         var mar_content = "<div>"
+        mar_content += "<img src='./static/imgs/img1.jpeg'>"
         mar_content += "房源:"+n.house_name
         mar_content += "房源来源："+n.message
         mar_content += "房源链接：<a tnarget = '_blank' href='"+n.url+"'>页面详情</a><div>";
