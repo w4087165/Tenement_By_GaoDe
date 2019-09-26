@@ -93,6 +93,64 @@
    	        border-bottom-right-radius: 4px;
             overflow: hidden;
         }
+        div.info-top {
+            position: relative;
+            background: none repeat scroll 0 0 #F9F9F9;
+            border-bottom: 1px solid #CCC;
+            border-radius: 5px 5px 0 0;
+        }
+
+        div.info-top div {
+            display: inline-block;
+            color: #333333;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 31px;
+            padding: 0 10px;
+            width: 360;
+        }
+
+        div.info-top img {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            transition-duration: 0.25s;
+        }
+
+        div.info-top img:hover {
+            box-shadow: 0px 0px 5px #000;
+        }
+
+        div.info-middle {
+            font-size: 12px;
+            padding: 10px 6px;
+            line-height: 20px;
+        }
+
+        div.info-bottom {
+            height: 0px;
+            width: 100%;
+            clear: both;
+            text-align: center;
+        }
+
+        div.info-bottom img {
+            position: relative;
+            z-index: 104;
+        }
+
+        span {
+            margin-left: 5px;
+            font-size: 11px;
+        }
+
+        .info-middle img {
+            float: left;
+            margin-right: 6px;
+        }
+        #images{
+            width: 215px;
+        }
     </style>
     
 </head>
@@ -141,6 +199,7 @@
             </div>
         </div>
     </div>
+
     <div class="login">
         <h4>获取房源信息中，请稍后...</h4>
     </div>
@@ -240,19 +299,23 @@
     //添加标记点传入返回的js数据 数据格式【{object}，{object},{object}】
     function addMarkerByPostion(n){
         //信息窗体对象  信息窗体的使用，在房源标记被点击时弹出
-        var infoWindow = new AMap.InfoWindow({offset: new AMap.Pixel(0, -30)});
+        var infoWindow = new AMap.InfoWindow({
+            offset: new AMap.Pixel(0, -30)
+        });
         console.log(n.house_name,n.message,n.url,n.address,n.locat)
         var marker = new AMap.Marker({
             position: n.locat,//[123456,154432]位置
             map: map
         });
-    
+        
         var mar_content = "<div>"
-        mar_content += "<img src="+n.img+">"
-        mar_content += "房源:"+n.house_name
-        mar_content += "房源来源："+n.platform
-        mar_content += "价格："+n.price
-        mar_content += "房源链接：<a tnarget = '_blank' href='"+n.url+"'>页面详情</a><div>";
+        mar_content += '<div class="info-top"><div>房源:'+n.house_name+'<span style="font-size:15px;color:#F00;">价格:'+n.price+'</span></div></div>'
+        mar_content += '<div class="info-middle"><img id="images" src='+n.img+'>'
+        mar_content += '<div>地址:'+n.house_name+'</div>'
+        mar_content += '<div>房源来源：'+n.platform+'</div>'
+        mar_content += "<div>房源链接：<a tnarget = '_blank' href='"+n.url+"'>页面详情</a></div></div>";
+        mar_content += '<input id="transfer_but" type="button" class="btn" value="查看路线" onclick="do_transfer('+n.locat[0]+','+n.locat[1]+')"/>';
+        mar_content += "<div>";
         marker.content = mar_content
         //在房源标记被点击时打
         rentMarkerArray.push(marker);
@@ -262,12 +325,35 @@
             infoWindow.open(map, e.target.getPosition());
         });
         // 规划路线
-        marker.on('click', function(e){
-            //鼠标移到标记上会显示标记content属性的内容
-            infoWindow.setContent(e.target.content);
-            //在标记的位置打开窗体
-            infoWindow.open(map, e.target.getPosition());
-            var transOptions = {
+        // marker.on('click', function(e){
+        //     //鼠标移到标记上会显示标记content属性的内容
+        //     infoWindow.setContent(e.target.content);
+        //     //在标记的位置打开窗体
+        //     infoWindow.open(map, e.target.getPosition());
+        //     var transOptions = {
+        //         map: map,
+        //         city: '北京市',
+        //         panel: 'panel',                            
+        //         //cityd:'乌鲁木齐',
+        //         policy: AMap.TransferPolicy.LEAST_TIME
+        //     };
+        //     if (transfer){
+        //         //如果绘制了上次路径 清除上次路径
+        //         transfer.clear()
+        //     }
+        //     //构造公交换乘类
+        //     transfer = new AMap.Transfer(transOptions);
+        //     //根据起、终点坐标查询公交换乘路线
+        //     transfer.search(new AMap.LngLat(x,y), new AMap.LngLat(n.locat[0],n.locat[1]), function(status, result) {
+        //         // result即是对应的公交路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_TransferResult
+        //         if (status === 'complete') {
+        //         }
+        //     });
+        // })
+    }
+
+    function do_transfer(lon,lat){
+        var transOptions = {
                 map: map,
                 city: '北京市',
                 panel: 'panel',                            
@@ -281,57 +367,12 @@
             //构造公交换乘类
             transfer = new AMap.Transfer(transOptions);
             //根据起、终点坐标查询公交换乘路线
-            transfer.search(new AMap.LngLat(x,y), new AMap.LngLat(n.locat[0],n.locat[1]), function(status, result) {
+            transfer.search(new AMap.LngLat(x,y), new AMap.LngLat(lon,lat), function(status, result) {
                 // result即是对应的公交路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_TransferResult
                 if (status === 'complete') {
                 }
             });
-        })
     }
-
-    // function addMarkerByAddress(address) {
-    //     var geocoder = new AMap.Geocoder({
-    //         city: "北京",
-    //         radius: 1000
-    //     });
-    //     geocoder.getLocation(address, function(status, result) {
-    //         if (status === "complete" && result.info === 'OK') {
-    //             var geocode = result.geocodes[0];
-    //             rentMarker = new AMap.Marker({
-    //                 map: map,
-    //                 title: address,
-    //                 icon: 'http://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
-    //                 position: [geocode.location.getLng(),geocode.location.getLat()]
-    //             });
-    //             rentMarkerArray.push(rentMarker);
-    //             //当标记点点开时显示的窗体
-    //             rentMarker.content = "<div>房源：<a target = '_blank' href='https://bj.58.com/pinpaigongyu/?key=" + address + "'>" + address + "</a><div>"
-    //             //在房源标记被点击时打开
-    //             rentMarker.on('click', function(e) {
-                    
-    //                 infoWindow.setContent(e.target.content);
-    //                 //在标记的位置打开窗体
-    //                 infoWindow.open(map, e.target.getPosition());
-    //             });
-                // rentMarker.on('click', function(e) {
-                //     infoWindow.setContent(e.target.content);
-                //     infoWindow.open(map, e.target.getPosition());
-                //     if (amapTransfer) amapTransfer.clear();
-                //     amapTransfer = new AMap.Transfer({
-                //         map: map,
-                //         policy: AMap.TransferPolicy.LEAST_TIME,
-                //         city: "北京市",
-                //         panel: 'transfer-panel'
-                //     });
-                //     amapTransfer.search([{
-                //         keyword: workAddress
-                //     }, {
-                //         keyword: address
-                //     }], function(status, result) {})
-                // });
-    //         }
-    //     })
-    // }
 
     function delWorkLocation() {
         if (polygonArray) map.remove(polygonArray);
