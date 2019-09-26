@@ -6,8 +6,7 @@ import random
 import time
 import re
 import pymysql
-
-
+import gevent
 
 class LianjiaSpider(object):
     def __init__(self):
@@ -68,12 +67,12 @@ class LianjiaSpider(object):
             # 4,房源经纬度---返回值:{'lon:': '116.192696', 'lat:': '39.921511'}
             locat = self.get_locat(second_url)
             item['locat'] = locat
-
+            imgs = './static/imgs/img'+str(random.randint(1,8))+'.jpeg'
             # 插入数据库数据
-            value = [item['message'],'链家网',item['message'],item['price'],item['locat'][0],item['locat'][1],item['url']]
+            value = [item['message'],'链家网',item['message'],item['price'],item['locat'][0],item['locat'][1],item['url'],imgs]
             print(value)
             try:
-                ins = 'insert into LianJia_table(house_name,platform,house_message,price,lon,lat,url) values(%s,%s,%s,%s,%s,%s,%s)'
+                ins = 'insert into LianJia_table(house_name,platform,house_message,price,lon,lat,url,images) values(%s,%s,%s,%s,%s,%s,%s,%s)'
                 self.cursor.execute(ins,value)
                 self.db.commit()
             except Exception as e:
@@ -95,7 +94,21 @@ class LianjiaSpider(object):
             self.parse_html(url)
             time.sleep(random.uniform(1, 3))
 
-
+def fun2():
+    while True:
+        print('asdfasdf')
+        gevent.sleep(1)
+def fun3():
+    while True:
+        print('asdf')
+        gevent.sleep(1)
 if __name__ == '__main__':
-    spider = LianjiaSpider()
-    spider.run()
+    from gevent import monkey
+    monkey.patch_socket()
+    lian_jia_spider = LianjiaSpider()
+    l = []
+    spider1 = gevent.spawn(lian_jia_spider.run)
+    spider2 = gevent.spawn(fun2)
+    l.append(spider1)
+    l.append(spider2)
+    gevent.joinall(l)

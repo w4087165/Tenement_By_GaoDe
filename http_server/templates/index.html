@@ -248,9 +248,10 @@
         });
     
         var mar_content = "<div>"
-        mar_content += "<img src='./static/imgs/img1.jpeg'>"
+        mar_content += "<img src="+n.img+">"
         mar_content += "房源:"+n.house_name
-        mar_content += "房源来源："+n.message
+        mar_content += "房源来源："+n.platform
+        mar_content += "价格："+n.price
         mar_content += "房源链接：<a tnarget = '_blank' href='"+n.url+"'>页面详情</a><div>";
         marker.content = mar_content
         //在房源标记被点击时打

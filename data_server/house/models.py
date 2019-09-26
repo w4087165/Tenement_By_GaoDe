@@ -17,7 +17,9 @@ class LianJiaTenementHouse(models.Model):
 
     lat = models.DecimalField(max_digits=10,decimal_places=6,verbose_name='纬度',default=0)
 
-    url = models.CharField(max_length=128,verbose_name='具体链接')
+    url = models.CharField(max_length=148,verbose_name='具体链接')
+
+    images = models.CharField(max_length=64,verbose_name='图片')
 
     class Meta:
         db_table = 'LianJia_table'
