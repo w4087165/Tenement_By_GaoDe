@@ -21,6 +21,13 @@
             top: 30px;
             right: 20px;
         }
+        .control-price{
+            weight:100px;
+            height:23px;
+            position:absolute;
+            left:50px;
+            top:40px;
+        }
         .login{
             padding: 10px;
             display: inline-block;
@@ -42,8 +49,8 @@
             margin-bottom: 10px;
         }
         
-        .control-input {
-            margin-left: 120px;
+        .control-input,.time {
+            margin-left: 10px;
         }
         
         .control-input input[type="text"] {
@@ -183,6 +190,8 @@
                 <div class="control-input">
                     <input type="radio" name="vehicle" value="SUBWAY,BUS" onClick="takeBus(this)" checked/> 公交+地铁
                     <input type="radio" name="vehicle" value="SUBWAY" onClick="takeSubway(this)" /> 地铁
+                    <input type="radio" name="vehicle" value="foot" onClick="takeWalk(this)" /> 步行
+                    <input type="radio" name="vehicle" value="SUBWAY" onClick="takeCycle(this)" /> 骑行
                 </div>
             </div>
             <!-- 路程时间　我们通过路程事件推算距离 -->

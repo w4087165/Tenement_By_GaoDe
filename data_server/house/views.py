@@ -34,8 +34,8 @@ def house_views(request):
         # """
         sql = 'select * from LianJia_table where ' \
         'sqrt(((('+user_lon+'-lon)*PI()*12656*cos((('+user_lat +'+lat)/2)*PI()/180)/180) * (('+user_lon+'-lon)*PI()*12656*cos ((('+user_lat+'+lat)/2)*PI()/180)/180) ) + ( (('+user_lat+'-lat)*PI()*12656/180) * (('+user_lat+'-lat)*PI()*12656/180)) )<'+str(user_message['DS'])+\
-        'and price>='+str(user_price-(5000 if user_price>=5000 else 1000))+\
-        'and price<='+str(user_price)
+        ' and price>='+str(user_price-(5000 if user_price>=5000 else 1000))+\
+        ' and price<='+str(user_price)
         a = cursor.execute(sql)
         print('查询到',a)
         if a:
