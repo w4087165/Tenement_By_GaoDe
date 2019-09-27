@@ -11,6 +11,7 @@ import re
 import pymysql
 import gevent
 from tools.spider_58 import five_eight
+from tools.ziru import ZiruSpider
 
 class LianjiaSpider(object):
     def __init__(self):
@@ -104,8 +105,11 @@ if __name__ == '__main__':
     l = []
     lian_jia_spider = LianjiaSpider()
     spider_58 = five_eight()
+    spider_ziru = ZiruSpider()
     spider1 = gevent.spawn(lian_jia_spider.run)
     spider2 = gevent.spawn(spider_58.run)
+    spider3 = gevent.spawn(spider_ziru.run)
     l.append(spider1)
     l.append(spider2)
+    l.append(spider3)
     gevent.joinall(l)

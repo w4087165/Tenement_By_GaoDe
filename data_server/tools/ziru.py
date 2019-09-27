@@ -67,21 +67,31 @@ class ZiruSpider(object):
 			except:
 				continue
 			locat_re = '"resblockPosition":.*?[(.*?)].*?"now"'
-			position = self.re_func(locat_re, sec_html)
-			position = position[0].split(':')[1]
+			position = self.re_func(locat_re, sec_html)[0]
+			position = position.split(':')[1]
 			# [116.363332,40.088118],"now"
-			position = position[:-6]
+			post = position.split(',')
+			position = [post[0][1:],post[1][:-1]]
 			item['position'] = position
-			print(item)
+			item['house_name'] = item['message'].split('-')[0]
+			imgs = './static/imgs/img' + str(random.randint(21, 24)) + '.jpeg'
+			value = [item['house_name'],'自如租房',item['message'],item['price'],item['position'][0],item['position'][1],item['href'],imgs]
+			print(value)
+			try:
+				ins = 'insert into LianJia_table(house_name,platform,house_message,price,lon,lat,url,images) values(%s,%s,%s,%s,%s,%s,%s,%s)'
+				self.cursor.execute(ins, value)
+				self.db.commit()
+			except Exception as e:
+				print(e)
 			time.sleep(random.uniform(0, 1))
-	
+
 	# 入口函数
 	def run(self):
 		# url
 		for i in range(50):
 			url = self.url.format(i)
 			self.parse_one_html(url)
-
+			time.sleep(random.uniform(0, 1))
 
 if __name__ == '__main__':
 	spider = ZiruSpider()
