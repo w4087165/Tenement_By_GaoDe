@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="http://cache.amap.com/lbs/static/jquery.range.css" />
     <script src="http://cache.amap.com/lbs/static/jquery-1.9.1.js"></script>
     <script src="http://cache.amap.com/lbs/static/es5.min.js"></script>
-    <script src="http://webapi.amap.com/maps?v=1.3&key=22d3816e107f199992666d6412fa0691&plugin=AMap.ArrivalRange,AMap.Scale,AMap.Geocoder,AMap.Transfer,AMap.Autocomplete"></script>
+    <script
+            src="http://webapi.amap.com/maps?v=1.3&key=22d3816e107f199992666d6412fa0691&plugin=AMap.ArrivalRange,AMap.Scale,AMap.Geocoder,AMap.Transfer,AMap.Autocomplete,AMap.Walking,AMap.Riding,AMap.Driving"></script>
     <script src="http://cache.amap.com/lbs/static/jquery.range.js"></script>
 
     <!-- 导入jqery  -->
@@ -20,6 +21,13 @@
             position: absolute;
             top: 30px;
             right: 20px;
+        }
+        .control-price{
+            weight:100px;
+            height:23px;
+            position:absolute;
+            left:50px;
+            top:40px;
         }
         .login{
             padding: 10px;
@@ -42,8 +50,8 @@
             margin-bottom: 10px;
         }
         
-        .control-input {
-            margin-left: 120px;
+        .control-input,.time {
+            margin-left: 10px;
         }
         
         .control-input input[type="text"] {
@@ -151,6 +159,13 @@
         #images{
             width: 215px;
         }
+        .control-input radio{
+            display:block
+
+        }
+        .control-input{
+         margin-left:0px
+        }
     </style>
     
 </head>
@@ -174,7 +189,7 @@
                     <option value="3000">2000-3000元</option>
                     <option value="4000">3000-4000元</option>
                     <option value="5000">4000-5000元</option>
-                    <option value="10000">5000元以上</option>
+                    <option value="100000">5000元以上</option>
                 </select>
             </div>
             <!-- 出行方式 -->
@@ -183,6 +198,9 @@
                 <div class="control-input">
                     <input type="radio" name="vehicle" value="SUBWAY,BUS" onClick="takeBus(this)" checked/> 公交+地铁
                     <input type="radio" name="vehicle" value="SUBWAY" onClick="takeSubway(this)" /> 地铁
+
+                    <input type="radio" name="vehicle" value="RIDE" onClick="takeride(this)" /> 骑行
+                    <input type="radio" name="vehicle" value="WAKE" onClick="takewake(this)" /> 步行
                 </div>
             </div>
             <!-- 路程时间　我们通过路程事件推算距离 -->
@@ -223,12 +241,14 @@
     var rentMarkerArray = [];
     //路线规划
     var transfer;
+    var walking;
+    var riding;
     //多边形队列，存储公交到达的计算结果
     var polygonArray = [];;
     //路程时间
     var distance_time = 20;
     // 出行方式速度
-    var speed = 25  //km/h
+    var speed = 13  //km/h
     var auto = new AMap.Autocomplete({
         //通过id指定输入元素
          input: "work-location"
@@ -251,6 +271,17 @@
     function takeSubway(radio) {
         vehicle = radio.value;
         speed = 36
+        loadWorkLocation()
+    }
+
+    function takeride(radio) {
+        vehicle = radio.value;
+        speed = 15
+        loadWorkLocation()
+    }
+    function takewake(radio) {
+        vehicle = radio.value;
+        speed = 25
         loadWorkLocation()
     }
     //其他出行方式可扩展 --【】
@@ -324,46 +355,73 @@
             //在标记的位置打开窗体
             infoWindow.open(map, e.target.getPosition());
         });
-        // 规划路线
-        // marker.on('click', function(e){
-        //     //鼠标移到标记上会显示标记content属性的内容
-        //     infoWindow.setContent(e.target.content);
-        //     //在标记的位置打开窗体
-        //     infoWindow.open(map, e.target.getPosition());
-        //     var transOptions = {
-        //         map: map,
-        //         city: '北京市',
-        //         panel: 'panel',                            
-        //         //cityd:'乌鲁木齐',
-        //         policy: AMap.TransferPolicy.LEAST_TIME
-        //     };
-        //     if (transfer){
-        //         //如果绘制了上次路径 清除上次路径
-        //         transfer.clear()
-        //     }
-        //     //构造公交换乘类
-        //     transfer = new AMap.Transfer(transOptions);
-        //     //根据起、终点坐标查询公交换乘路线
-        //     transfer.search(new AMap.LngLat(x,y), new AMap.LngLat(n.locat[0],n.locat[1]), function(status, result) {
-        //         // result即是对应的公交路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_TransferResult
-        //         if (status === 'complete') {
-        //         }
-        //     });
-        // })
+
     }
 
     function do_transfer(lon,lat){
-        var transOptions = {
+       if($("input[name='vehicle']:checked").val()=='RIDE')
+    {var ridingOption = {
+        map: map,
+        panel: "panel",
+        policy: 1,
+        hideMarkers: false,
+        isOutline: true,
+        outlineColor: '#ffeeee',
+        autoFitView: true
+    }
+
+                //如果绘制了上次路径 清除上次路径
+
+               delpath()
+
+    riding = new AMap.Riding(ridingOption)
+
+    //根据起终点坐标规划骑行路线
+    riding.search(new AMap.LngLat(x,y), new AMap.LngLat(lon,lat), function(status, result) {
+        // result即是对应的公交路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_RidingResult
+        if (status === 'complete') {
+        }
+
+    })}
+    if($("input[name='vehicle']:checked").val()=='WALK')
+    {var walkOption = {
+        map: map,
+        panel: "panel",
+        hideMarkers: false,
+        isOutline: true,
+        outlineColor: '#ffeeee',
+        autoFitView: true
+    }
+
+                //如果绘制了上次路径 清除上次路径
+
+                delpath()
+
+
+    // 步行导航
+    walking = new AMap.Walking(walkOption)
+
+    //根据起终点坐标规划步行路线
+    walking.search(new AMap.LngLat(x,y), new AMap.LngLat(lon,lat), function(status, result) {
+        // result即是对应的不行路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_RidingResult
+        if (status === 'complete') {
+        }
+
+        })}
+    if($("input[name='vehicle']:checked").val()=='SUBWAY,BUS')
+    {
+    var transOptions = {
                 map: map,
                 city: '北京市',
-                panel: 'panel',                            
-                //cityd:'乌鲁木齐',
+                panel: 'panel',
                 policy: AMap.TransferPolicy.LEAST_TIME
             };
-            if (transfer){
+
                 //如果绘制了上次路径 清除上次路径
-                transfer.clear()
-            }
+
+                delpath()
+
+
             //构造公交换乘类
             transfer = new AMap.Transfer(transOptions);
             //根据起、终点坐标查询公交换乘路线
@@ -371,8 +429,49 @@
                 // result即是对应的公交路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_TransferResult
                 if (status === 'complete') {
                 }
-            });
+                })
     }
+    if($("input[name='vehicle']:checked").val()=='SUBWAY')
+    {var transOptions = {
+                map: map,
+                city: '北京市',
+                panel: 'panel',
+                policy: AMap.TransferPolicy.LEAST_TIME
+            };
+
+                //如果绘制了上次路径 清除上次路径
+
+
+            delpath()
+            //构造公交换乘类
+            transfer = new AMap.Transfer(transOptions);
+            //根据起、终点坐标查询公交换乘路线
+            transfer.search(new AMap.LngLat(x,y), new AMap.LngLat(lon,lat), function(status, result) {
+                // result即是对应的公交路线数据信息，相关数据结构文档请参考  https://lbs.amap.com/api/javascript-api/reference/route-search#m_TransferResult
+                if (status === 'complete') {
+                }
+                })
+
+    }
+
+
+    }
+
+    function  delpath(){
+        if(transfer)
+            {
+            transfer.clear()
+            }
+        if(walking)
+            {
+            walking.clear()
+            }
+        if(riding)
+            {
+            riding.clear()
+            }
+    }
+
 
     function delWorkLocation() {
         if (polygonArray) map.remove(polygonArray);

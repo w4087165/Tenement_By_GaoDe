@@ -1,3 +1,6 @@
+#!/usrabin/env pyhton
+import sys
+sys.path.append('/usr/local/lib/python3.6/site-packages')
 # 链家租房
 import requests
 from tools.UserAgent import USERAGENT_LIST
@@ -7,6 +10,7 @@ import time
 import re
 import pymysql
 import gevent
+from tools.spider_58 import five_eight
 
 class LianjiaSpider(object):
     def __init__(self):
@@ -67,7 +71,7 @@ class LianjiaSpider(object):
             # 4,房源经纬度---返回值:{'lon:': '116.192696', 'lat:': '39.921511'}
             locat = self.get_locat(second_url)
             item['locat'] = locat
-            imgs = './static/imgs/img'+str(random.randint(1,8))+'.jpeg'
+            imgs = './static/imgs/img'+str(random.randint(11,18))+'.jpeg'
             # 插入数据库数据
             value = [item['message'],'链家网',item['message'],item['price'],item['locat'][0],item['locat'][1],item['url'],imgs]
             print(value)
@@ -89,26 +93,19 @@ class LianjiaSpider(object):
         return a_list
 
     def run(self):
-        for pg in range(1, 2):
+        for pg in range(1, 70):
             url = self.url + 'zufang/pg{}'.format(pg)
             self.parse_html(url)
             time.sleep(random.uniform(1, 3))
 
-def fun2():
-    while True:
-        print('asdfasdf')
-        gevent.sleep(1)
-def fun3():
-    while True:
-        print('asdf')
-        gevent.sleep(1)
 if __name__ == '__main__':
     from gevent import monkey
     monkey.patch_socket()
-    lian_jia_spider = LianjiaSpider()
     l = []
+    lian_jia_spider = LianjiaSpider()
+    spider_58 = five_eight()
     spider1 = gevent.spawn(lian_jia_spider.run)
-    spider2 = gevent.spawn(fun2)
+    spider2 = gevent.spawn(spider_58.run)
     l.append(spider1)
     l.append(spider2)
     gevent.joinall(l)
